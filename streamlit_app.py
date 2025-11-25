@@ -5,6 +5,53 @@ import joblib
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 # =========================
+# Beautiful UI setup
+# =========================
+
+st.set_page_config(
+    page_title="Loan Status Predictor",
+    page_icon="💳",
+    layout="wide"
+)
+
+# Custom CSS
+st.markdown("""
+<style>
+.card {
+    border-radius: 0.7rem;
+    padding: 1rem 1.2rem;
+    border: 1px solid #eeeeee;
+    background-color: #ffffff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    margin-bottom: 1rem;
+}
+.card-warning {
+    background-color: #FFF9E6;
+    border-color: #FFE08A;
+}
+.card-danger {
+    background-color: #FFE9E9;
+    border-color: #FF9B9B;
+}
+.card-success {
+    background-color: #E9FBF0;
+    border-color: #9BE7C4;
+}
+.big-title {
+    font-size: 2.0rem;
+    font-weight: 700;
+    margin-bottom: 0.2rem;
+}
+.subtitle {
+    font-size: 0.95rem;
+    color: #555555;
+    margin-bottom: 1.5rem;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
+# =========================
 # 1. Load model + metadata
 # =========================
 
@@ -136,13 +183,15 @@ home_ownership_mapping = {
 
 st.set_page_config(page_title="Loan Status Predictor", page_icon="💳")
 
-st.title("💳 Loan Status Prediction App")
+st.markdown('<div class="big-title">💳 Loan Default & Sentiment Risk Checker</div>', unsafe_allow_html=True)
+
 st.markdown(
-    """
-This app uses a Logistic Regression model trained on historical loan data.
-It combines **traditional credit variables** with **sentiment from the borrower's description**
-to predict whether a loan is likely to be **Fully Paid (1)** or **Default (0)**.
-"""
+    '<div class="subtitle">'
+    'This app uses a Logistic Regression model trained on historical loans. '
+    'It combines <b>credit factors</b> with <b>sentiment from borrower text</b> '
+    'to predict whether a loan will be <b>Fully Paid</b> or <b>Default</b>.'
+    '</div>',
+    unsafe_allow_html=True
 )
 
 st.sidebar.header("Input Loan Information")
@@ -202,46 +251,52 @@ input_data["sentiment_label"] = sentiment_label_num
 # Create DataFrame in correct order
 input_df = pd.DataFrame([input_data])[feature_cols]
 
-st.subheader("Input Summary (model-ready features)")
-st.write(input_df)
+st.markdown("### 🧾 Input Summary")
+st.dataframe(input_df, use_container_width=True)
 
 st.markdown(
-    f"**Detected sentiment from description:** {sentiment_word} (label = {sentiment_label_num})"
+    f"**Sentiment detected:** <b>{sentiment_word}</b> (label = {sentiment_label_num})",
+    unsafe_allow_html=True
 )
 
 # =========================
 # 6. Prediction (button)
 # =========================
 
-if st.button("Predict Loan Status"):
-    # Base model prediction
+if st.button("🔍 Predict Loan Status", type="primary"):
+
     pred_class = model.predict(input_df)[0]
     prob_full = model.predict_proba(input_df)[0, 1]
 
-    # Strong red flag override
     if strong_red_flag:
         pred_class = 0
         prob_full = min(prob_full, 0.10)
-        st.warning(
-            "🚨 **Strong red-flag phrase** detected in the description "
-            "(e.g., clear refusal or inability to pay). "
-            "For safety, this loan is treated as **high default risk**."
+        st.markdown(
+            '<div class="card card-danger">🚨 <b>Strong red-flag phrase detected.</b>'
+            ' This loan is treated as high default risk.</div>',
+            unsafe_allow_html=True
         )
 
-    # Risky phrase override (softer cap)
     elif risky_flag:
         pred_class = 0
         prob_full = min(prob_full, 0.30)
-        st.warning(
-            "⚠️ **Risky phrase** detected in the description "
-            "(e.g., 'lost my job', serious financial difficulty). "
-            "This loan is treated as **default risk** even if other factors look good."
+        st.markdown(
+            '<div class="card card-warning">⚠️ <b>Risky phrase detected.</b>'
+            ' Borrower may have financial instability.</div>',
+            unsafe_allow_html=True
         )
 
-    st.subheader("Prediction Result")
     if pred_class == 1:
-        st.success("✅ The model predicts this loan is likely to be **Fully Paid (1)**.")
+        st.markdown(
+            f'<div class="card card-success">✅ <b>Prediction:</b> Fully Paid (1)<br>'
+            f'<b>Probability:</b> {prob_full:.1%}</div>',
+            unsafe_allow_html=True
+        )
     else:
-        st.error("⚠️ The model predicts this loan is likely to **Default / Charged Off (0)**.")
+        st.markdown(
+            f'<div class="card card-danger">⚠️ <b>Prediction:</b> Default / Charged Off (0)<br>'
+            f'<b>Probability (Fully Paid):</b> {prob_full:.1%}</div>',
+            unsafe_allow_html=True
+        )
 
     st.write(f"**Probability of Fully Paid (class 1):** {prob_full:.3f}")
