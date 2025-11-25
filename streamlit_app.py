@@ -5,51 +5,114 @@ import joblib
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 # =========================
-# Beautiful UI setup
+# Beautiful UI setup (colors like landing page)
 # =========================
 
 st.set_page_config(
-    page_title="Loan Status Predictor",
+    page_title="YES BANK – Online Loan Risk Checker",
     page_icon="💳",
-    layout="wide"
+    layout="wide",
 )
 
-# Custom CSS
-st.markdown("""
+st.markdown(
+    """
 <style>
-.card {
-    border-radius: 0.7rem;
-    padding: 1rem 1.2rem;
-    border: 1px solid #eeeeee;
+/* Background gradient like online banking landing page */
+.stApp {
+    background: linear-gradient(135deg, #04c8ff 0%, #0072ff 40%, #f5f7fb 100%);
+}
+
+/* Main white card in the middle */
+.main-card {
+    background-color: rgba(255,255,255,0.98);
+    border-radius: 26px;
+    padding: 2rem 2.5rem;
+    box-shadow: 0 20px 45px rgba(0,0,0,0.18);
+    margin-top: 1.5rem;
+}
+
+/* Small inner cards */
+.section-card {
     background-color: #ffffff;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    border-radius: 18px;
+    padding: 1.1rem 1.4rem;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.06);
     margin-bottom: 1rem;
 }
+
+/* Header text styles */
+.header-title {
+    font-size: 2.0rem;
+    font-weight: 800;
+    color: #0b2e5b;
+    margin-bottom: 0.4rem;
+}
+.header-subtitle {
+    font-size: 0.95rem;
+    color: #4b6a96;
+}
+
+/* Small badge "For individuals" style */
+.hero-badge {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: #004a99;
+    background: rgba(255,255,255,0.7);
+    padding: 0.18rem 0.7rem;
+    border-radius: 999px;
+    display: inline-block;
+}
+
+/* Primary button style */
+.stButton>button {
+    background: #0052cc;
+    color: white;
+    border-radius: 999px;
+    padding: 0.5rem 1.6rem;
+    border: none;
+    font-weight: 600;
+}
+.stButton>button:hover {
+    background: #003c99;
+}
+
+/* Result & warning cards */
 .card-warning {
     background-color: #FFF9E6;
-    border-color: #FFE08A;
+    border-left: 5px solid #FFB300;
+    border-radius: 14px;
+    padding: 0.8rem 1.0rem;
+    margin-top: 0.6rem;
 }
 .card-danger {
     background-color: #FFE9E9;
-    border-color: #FF9B9B;
+    border-left: 5px solid #E53935;
+    border-radius: 14px;
+    padding: 0.8rem 1.0rem;
+    margin-top: 0.6rem;
 }
 .card-success {
-    background-color: #E9FBF0;
-    border-color: #9BE7C4;
+    background-color: #E5F9EE;
+    border-left: 5px solid #2E7D32;
+    border-radius: 14px;
+    padding: 0.8rem 1.0rem;
+    margin-top: 0.6rem;
 }
-.big-title {
-    font-size: 2.0rem;
-    font-weight: 700;
-    margin-bottom: 0.2rem;
+
+/* Sidebar background */
+section[data-testid="stSidebar"] {
+    background: linear-gradient(180deg, #0072ff 0%, #0bb5ff 60%, #ffffff 100%);
+    color: #ffffff;
 }
-.subtitle {
-    font-size: 0.95rem;
-    color: #555555;
-    margin-bottom: 1.5rem;
+section[data-testid="stSidebar"] h2, 
+section[data-testid="stSidebar"] label {
+    color: #ffffff;
 }
 </style>
-""", unsafe_allow_html=True)
-
+""",
+    unsafe_allow_html=True,
+)
 
 # =========================
 # 1. Load model + metadata
@@ -84,7 +147,6 @@ STRONG_NEGATIVE_PHRASES = [
     "not going to pay back",
     "i will just default",
     "i want to default",
-
     # Direct inability to pay
     "cannot pay",
     "can't pay",
@@ -178,23 +240,19 @@ home_ownership_mapping = {
 }
 
 # =========================
-# 4. Streamlit UI
+# 4. Layout: header + sidebar + main card
 # =========================
 
-st.set_page_config(page_title="Loan Status Predictor", page_icon="💳")
+# --- Top bar with "For individuals" and YES BANK logo ---
+top_left, top_right = st.columns([4, 1])
+with top_left:
+    st.markdown('<span class="hero-badge">For individuals</span>', unsafe_allow_html=True)
+with top_right:
+    # make sure yes_bank_logo.png is in the same folder as app.py
+    st.image("yes_bank_logo.png", use_column_width=True)
 
-st.markdown('<div class="big-title">💳 Loan Default & Sentiment Risk Checker</div>', unsafe_allow_html=True)
-
-st.markdown(
-    '<div class="subtitle">'
-    'This app uses a Logistic Regression model trained on historical loans. '
-    'It combines <b>credit factors</b> with <b>sentiment from borrower text</b> '
-    'to predict whether a loan will be <b>Fully Paid</b> or <b>Default</b>.'
-    '</div>',
-    unsafe_allow_html=True
-)
-
-st.sidebar.header("Input Loan Information")
+# --- Sidebar inputs ---
+st.sidebar.header("Loan Application Inputs")
 
 loan_amnt = st.sidebar.number_input(
     "Loan Amount", min_value=0.0, step=1000.0, value=10000.0
@@ -221,7 +279,42 @@ desc_text = st.sidebar.text_area(
 )
 
 # =========================
-# 5. Build model input row
+# 5. Main content card
+# =========================
+
+st.markdown('<div class="main-card">', unsafe_allow_html=True)
+
+hero_left, hero_right = st.columns([2, 1.4])
+
+with hero_left:
+    st.markdown(
+        '<div class="header-title">Online Banking Loan Risk Check</div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        '<div class="header-subtitle">'
+        'YES BANK uses data & sentiment analysis to estimate the likelihood that a loan '
+        'will be <b>Fully Paid</b> or <b>Default / Charged Off</b>. '
+        'Adjust the inputs on the left and see how the risk changes.'
+        '</div>',
+        unsafe_allow_html=True,
+    )
+
+with hero_right:
+    st.markdown(
+        """
+        <div class="section-card">
+            <b>Why it matters?</b><br>
+            • Faster credit decisions<br>
+            • Combine numbers + text<br>
+            • Highlight risky descriptions
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+# =========================
+# 6. Build model input row
 # =========================
 
 sentiment_label_num = get_sentiment_label(desc_text)
@@ -251,52 +344,78 @@ input_data["sentiment_label"] = sentiment_label_num
 # Create DataFrame in correct order
 input_df = pd.DataFrame([input_data])[feature_cols]
 
+# --- Input summary section ---
 st.markdown("### 🧾 Input Summary")
+st.markdown('<div class="section-card">', unsafe_allow_html=True)
 st.dataframe(input_df, use_container_width=True)
-
 st.markdown(
-    f"**Sentiment detected:** <b>{sentiment_word}</b> (label = {sentiment_label_num})",
-    unsafe_allow_html=True
+    f"<br><b>Detected sentiment from description:</b> {sentiment_word} "
+    f"(label = {sentiment_label_num})",
+    unsafe_allow_html=True,
 )
+st.markdown("</div>", unsafe_allow_html=True)
 
 # =========================
-# 6. Prediction (button)
+# 7. Prediction (button + colored result cards)
 # =========================
 
-if st.button("🔍 Predict Loan Status", type="primary"):
+st.markdown("### 🔍 Prediction")
 
+if st.button("Check Loan Status"):
+    # Base model prediction
     pred_class = model.predict(input_df)[0]
     prob_full = model.predict_proba(input_df)[0, 1]
 
+    # Strong red flag override
     if strong_red_flag:
         pred_class = 0
         prob_full = min(prob_full, 0.10)
         st.markdown(
-            '<div class="card card-danger">🚨 <b>Strong red-flag phrase detected.</b>'
-            ' This loan is treated as high default risk.</div>',
-            unsafe_allow_html=True
+            """
+            <div class="card-danger">
+            🚨 <b>Strong red-flag phrase detected in the description.</b><br>
+            This loan is treated as <b>high default risk</b> even if numeric factors look good.
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
+    # Risky phrase override (softer cap)
     elif risky_flag:
         pred_class = 0
         prob_full = min(prob_full, 0.30)
         st.markdown(
-            '<div class="card card-warning">⚠️ <b>Risky phrase detected.</b>'
-            ' Borrower may have financial instability.</div>',
-            unsafe_allow_html=True
+            """
+            <div class="card-warning">
+            ⚠️ <b>Risky phrase detected in the description</b> 
+            (e.g. lost job, serious financial difficulty).<br>
+            The model treats this loan as <b>default risk</b>.
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
+    # Final prediction card
     if pred_class == 1:
         st.markdown(
-            f'<div class="card card-success">✅ <b>Prediction:</b> Fully Paid (1)<br>'
-            f'<b>Probability:</b> {prob_full:.1%}</div>',
-            unsafe_allow_html=True
+            f"""
+            <div class="card-success">
+            ✅ <b>Prediction:</b> This loan is likely to be <b>Fully Paid (1)</b>.<br>
+            <b>Estimated probability of Fully Paid:</b> {prob_full:.1%}
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
     else:
         st.markdown(
-            f'<div class="card card-danger">⚠️ <b>Prediction:</b> Default / Charged Off (0)<br>'
-            f'<b>Probability (Fully Paid):</b> {prob_full:.1%}</div>',
-            unsafe_allow_html=True
+            f"""
+            <div class="card-danger">
+            ⚠️ <b>Prediction:</b> This loan is likely to <b>Default / Charged Off (0)</b>.<br>
+            <b>Estimated probability of Fully Paid:</b> {prob_full:.1%}
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
-    st.write(f"**Probability of Fully Paid (class 1):** {prob_full:.3f}")
+# close main-card div
+st.markdown("</div>", unsafe_allow_html=True)
